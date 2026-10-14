@@ -37,6 +37,17 @@ class PriceSourceTimeoutError(PriceSourceError):
 class PriceSourceRateLimitedError(PriceSourceError):
     """Источник цен ограничил частоту запросов."""
 
+    def __init__(self, retry_after_seconds: float | None = None) -> None:
+        self.retry_after_seconds = retry_after_seconds
+        message = "price source rate limit exceeded"
+        if retry_after_seconds is not None:
+            message = f"{message} (retry after {retry_after_seconds:g}s)"
+        super().__init__(message)
+
+
+class PriceSourceUnavailableError(PriceSourceError):
+    """Источник цен недоступен: сетевая или транспортная ошибка."""
+
 
 class PriceSourceHttpError(PriceSourceError):
     """Источник цен ответил HTTP-ошибкой."""
