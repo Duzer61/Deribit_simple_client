@@ -6,9 +6,12 @@
 
 from collections.abc import Sequence
 from decimal import Decimal
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
 from deribit_tracker.domain.models import PriceObservation, Ticker
+
+if TYPE_CHECKING:
+    from deribit_tracker.application.services import CollectionReport
 
 
 class Clock(Protocol):
@@ -63,4 +66,16 @@ class PriceUnitOfWork(Protocol):
         traceback: object,
     ) -> None:
         """Фиксирует или откатывает транзакцию и закрывает сессию."""
+        ...
+
+
+class CollectionRunner(Protocol):
+    """Асинхронный сценарий сбора, который вызывает периодическая задача.
+
+    Реализация владеет своими ресурсами (engine, HTTP-сессия) и предоставляется как
+    асинхронный контекстный менеджер через ``runner_factory``.
+    """
+
+    async def collect_once(self) -> CollectionReport:
+        """Выполняет один цикл сбора и возвращает отчёт."""
         ...
