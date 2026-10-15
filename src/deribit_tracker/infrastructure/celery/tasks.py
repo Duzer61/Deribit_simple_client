@@ -8,7 +8,6 @@
 import asyncio
 import logging
 from collections.abc import Callable
-from contextlib import AbstractAsyncContextManager
 
 from celery import Celery
 
@@ -19,7 +18,7 @@ COLLECT_PRICES_TASK_NAME = "deribit_tracker.collect_prices"
 COLLECT_SCHEDULE_SECONDS = 60.0
 COLLECT_PRICES_SCHEDULE_KEY = "collect-prices-every-minute"
 
-RunnerFactory = Callable[[], AbstractAsyncContextManager[CollectionRunner]]
+RunnerFactory = Callable[[], CollectionRunner]
 
 
 async def collect_once_with(runner_factory: RunnerFactory) -> CollectionReport:

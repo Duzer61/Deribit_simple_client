@@ -6,6 +6,7 @@
 
 from collections.abc import Sequence
 from decimal import Decimal
+from types import TracebackType
 from typing import TYPE_CHECKING, Protocol
 
 from deribit_tracker.domain.models import PriceObservation, Ticker
@@ -72,9 +73,22 @@ class PriceUnitOfWork(Protocol):
 class CollectionRunner(Protocol):
     """Асинхронный сценарий сбора, который вызывает периодическая задача.
 
-    Реализация владеет своими ресурсами (engine, HTTP-сессия) и предоставляется как
-    асинхронный контекстный менеджер через ``runner_factory``.
+    Реализация — асинхронный контекстный менеджер, возвращающий себя из ``__aenter__``
+    и владеющий собственными ресурсами (engine, HTTP-сессия).
     """
+
+    async def __aenter__(self) -> CollectionRunner:
+        """Открывает ресурсы сбора и возвращает раннер."""
+        ...
+
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
+        """Закрывает ресурсы сбора."""
+        ...
 
     async def collect_once(self) -> CollectionReport:
         """Выполняет один цикл сбора и возвращает отчёт."""
