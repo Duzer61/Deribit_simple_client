@@ -1,0 +1,23 @@
+# Контекст сборки: только то, что нужно образу приложения.
+.git
+.gitignore
+.venv
+__pycache__
+*.py[cod]
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.env
+.env.*
+!.env.example
+.cline
+.clinerules
+tests
+*.md
+# README.md нужен hatchling: pyproject.toml объявляет readme = "README.md".
+!README.md
+Dockerfile
+.dockerignore
+compose.yaml
+celerybeat-schedule*
+celerybeat.pid

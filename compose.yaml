@@ -1,5 +1,14 @@
 name: deribit-tracker
 
+# Общие переменные окружения для api, worker, beat и migrate.
+# Внутри compose сервисы обращаются друг к другу по именам: postgres, redis.
+x-app-environment: &app-environment
+  DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-deribit}:${POSTGRES_PASSWORD:-deribit}@postgres:5432/${POSTGRES_DB:-deribit_tracker}
+  CELERY_BROKER_URL: redis://redis:6379/0
+  DERIBIT_BASE_URL: ${DERIBIT_BASE_URL:-https://www.deribit.com/api/v2}
+  HTTP_TIMEOUT_SECONDS: ${HTTP_TIMEOUT_SECONDS:-10}
+  LOG_LEVEL: ${LOG_LEVEL:-INFO}
+
 services:
   postgres:
     image: postgres:17-alpine
@@ -28,6 +37,82 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  # Разовая задача: применяет миграции до старта api/worker/beat.
+  # Миграции не запускаются конкурентно каждым процессом — только здесь.
+  migrate:
+    build: .
+    image: deribit-tracker-app
+    command: ["alembic", "upgrade", "head"]
+    environment: *app-environment
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    build: .
+    image: deribit-tracker-app
+    command:
+      - uvicorn
+      - deribit_tracker.api.app:create_app
+      - --factory
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+    environment: *app-environment
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      # В образе нет curl, поэтому проверка через стандартную библиотеку Python.
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # Один worker с concurrency 1: сбор состоит из двух запросов в минуту.
+  worker:
+    build: .
+    image: deribit-tracker-app
+    command: ["python", "-m", "deribit_tracker.infrastructure.celery.worker"]
+    environment: *app-environment
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # Единственный экземпляр beat: запускает задачу сбора раз в минуту.
+  beat:
+    build: .
+    image: deribit-tracker-app
+    command: ["python", "-m", "deribit_tracker.infrastructure.celery.beat"]
+    environment: *app-environment
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
 volumes:
   postgres_data:
