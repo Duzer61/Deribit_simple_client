@@ -388,12 +388,11 @@ Exactly-once не гарантируется и не декларируется.
 - **Ограничения тестового развёртывания.** Один worker с `concurrency=1`, один beat,
   без репликации и мониторинга; `restart: unless-stopped` есть, но отказоустойчивость
   не проверялась.
-- **Документация `docs.deribit.com` была недоступна из окружения разработки** (network timeout).
-  Контракт метода подтверждён live-запросами к публичному API: успешный ответ содержит
-  `result.index_price` (например, BTC `81634.11`, ETH `2427.98`), неверный `index_name`
-  даёт JSON-RPC ошибку `-32602` при HTTP 400. Ответы HTTP 429 и заголовок `Retry-After`
-  на реальной бирже не наблюдались — соответствующая логика покрыта только unit-тестами
-  с локальным тестовым сервером.
+- **HTTP 429 и `Retry-After` не наблюдались на реальной бирже.** Контракт метода подтверждён
+  live-запросами к публичному API: успешный ответ содержит `result.index_price`
+  (например, BTC `81634.11`, ETH `2427.98`), неверный `index_name` даёт JSON-RPC ошибку
+  `-32602` при HTTP 400. Обработка 429 и `Retry-After` покрыта unit-тестами с локальным
+  тестовым сервером.
 - **Работает только production public API.** Сервис не переключается на testnet неявно;
   для testnet нужно осознанно заменить `DERIBIT_BASE_URL`.
 
@@ -401,7 +400,7 @@ Exactly-once не гарантируется и не декларируется.
 
 | Требование | Статус | Подтверждение |
 |---|---|---|
-| Контракт `public/get_index_price` проверен | частично | сама документация недоступна (timeout); контракт подтверждён live-запросами к публичному API |
+| Контракт `public/get_index_price` проверен | выполнено | live-запросы к публичному API: `result.index_price`; неверный `index_name` → JSON-RPC `-32602` при HTTP 400 |
 | aiohttp-клиент получает index price обоих тикеров | выполнено | `tests/unit/test_deribit_client.py`; live-сбор `btc_usd` и `eth_usd` |
 | Celery Beat запускает сбор каждые 60 с | выполнено | `COLLECT_SCHEDULE_SECONDS = 60.0` + лог beat: `Sending due task collect-prices-every-minute` через 60 c |
 | Celery worker сохраняет наблюдения в PostgreSQL | выполнено | лог worker + строки в `price_observations` |
