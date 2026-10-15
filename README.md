@@ -206,13 +206,13 @@ uv run alembic current        # текущая ревизия: 0001 (head)
 Примеры (проверялись на живых данных проекта):
 
 ```bash
-# все BTC-записи
+# все BTC-записи (здесь показана первая из списка)
 curl 'http://127.0.0.1:8000/api/v1/prices?ticker=btc_usd'
-# [{"id":1,"ticker":"btc_usd","price":"81127.090000000000","timestamp":1792053784}]
+# [{"id":1,"ticker":"btc_usd","price":"81127.090000000000","timestamp":1792053784}, ...]
 
 # последняя ETH-цена
 curl 'http://127.0.0.1:8000/api/v1/prices/latest?ticker=eth_usd'
-# {"id":8,"ticker":"eth_usd","price":"2372.860000000000","timestamp":1792055081}
+# {"id":10,"ticker":"eth_usd","price":"2373.870000000000","timestamp":1792055089}
 
 # BTC-записи за указанный UTC-день
 curl 'http://127.0.0.1:8000/api/v1/prices/by-date?ticker=btc_usd&date=2026-10-15'
@@ -242,10 +242,10 @@ curl 'http://127.0.0.1:8000/health'
 
 ```json
 {
-  "id": 8,
+  "id": 10,
   "ticker": "eth_usd",
-  "price": "2372.860000000000",
-  "timestamp": 1792055081
+  "price": "2373.870000000000",
+  "timestamp": 1792055089
 }
 ```
 
