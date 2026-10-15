@@ -32,9 +32,15 @@ class FakePriceSource:
 class FakePriceRepository:
     """Хранилище наблюдений в памяти с детерминированными сортировками."""
 
-    def __init__(self, storage: list[PriceObservation], add_log: list[PriceObservation]) -> None:
+    def __init__(
+        self,
+        storage: list[PriceObservation],
+        add_log: list[PriceObservation],
+        range_calls: list[tuple[Ticker, int, int]],
+    ) -> None:
         self._storage = storage
         self._add_log = add_log
+        self._range_calls = range_calls
 
     async def add(self, observation: PriceObservation) -> PriceObservation:
         stored = replace(observation, id=len(self._storage) + 1)
@@ -55,6 +61,7 @@ class FakePriceRepository:
     async def list_by_timestamp_range(
         self, ticker: Ticker, start_timestamp: int, end_timestamp: int
     ) -> Sequence[PriceObservation]:
+        self._range_calls.append((ticker, start_timestamp, end_timestamp))
         matches = [
             item
             for item in self._storage
@@ -66,16 +73,17 @@ class FakePriceRepository:
 class FakePriceUnitOfWork:
     """Единица работы: отдаёт фейковый репозиторий и считает входы/выходы."""
 
-    def __init__(self) -> None:
-        self.storage: list[PriceObservation] = []
+    def __init__(self, storage: Sequence[PriceObservation] | None = None) -> None:
+        self.storage: list[PriceObservation] = list(storage) if storage is not None else []
         self.added: list[PriceObservation] = []
+        self.range_calls: list[tuple[Ticker, int, int]] = []
         self.entered = 0
         self.exited = 0
         self.exceptions: list[BaseException | None] = []
 
     async def __aenter__(self) -> FakePriceRepository:
         self.entered += 1
-        return FakePriceRepository(self.storage, self.added)
+        return FakePriceRepository(self.storage, self.added, self.range_calls)
 
     async def __aexit__(
         self,
