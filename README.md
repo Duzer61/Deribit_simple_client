@@ -131,8 +131,15 @@ uv run uvicorn deribit_tracker.api.app:create_app --factory --host 0.0.0.0 --por
 
 4. Worker и beat — в отдельных терминалах; beat запускается ровно один:
 
+Worker (исполнитель задач):
+
 ```bash
 uv run python -m deribit_tracker.infrastructure.celery.worker
+```
+
+Beat (планировщик, ровно один экземпляр):
+
+```bash
 uv run python -m deribit_tracker.infrastructure.celery.beat
 ```
 
