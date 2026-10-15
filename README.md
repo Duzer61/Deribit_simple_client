@@ -405,7 +405,7 @@ Exactly-once не гарантируется и не декларируется.
 | aiohttp-клиент получает index price обоих тикеров | выполнено | `tests/unit/test_deribit_client.py`; live-сбор `btc_usd` и `eth_usd` |
 | Celery Beat запускает сбор каждые 60 с | выполнено | `COLLECT_SCHEDULE_SECONDS = 60.0` + лог beat: `Sending due task collect-prices-every-minute` через 60 c |
 | Celery worker сохраняет наблюдения в PostgreSQL | выполнено | лог worker + строки в `price_observations` |
-| Данные: тикер, точная цена, UNIX timestamp | выполнено | `NUMERIC(30,12)`, `BIGINT`; ответ API с `"price":"2372.860000000000"` |
+| Данные: тикер, точная цена, UNIX timestamp | выполнено | `NUMERIC(30,12)`, `BIGINT`; ответ API с `"price":"2373.870000000000"` |
 | Три обязательных GET endpoint | выполнено | `/api/v1/prices`, `/api/v1/prices/latest`, `/api/v1/prices/by-date` |
 | У каждого обязательного endpoint обязательный `ticker` | выполнено | `ticker: Ticker = Query(...)`; без параметра → 422 |
 | Latest детерминированно выбирает последнюю запись | выполнено | `ORDER BY timestamp DESC, id DESC LIMIT 1`; integration-тест на одинаковых timestamp |
