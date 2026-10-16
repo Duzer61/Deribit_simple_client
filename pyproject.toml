@@ -38,7 +38,27 @@ target-version = "py314"
 src = ["src", "tests"]
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "UP", "B", "SIM", "ASYNC", "LOG"]
+select = [
+    "E",
+    "F",
+    "I",
+    "UP",
+    "B",
+    "SIM",
+    "ASYNC",
+    "LOG",
+    # Детекторы мёртвого кода и YAGNI-мусора:
+    "ARG",      # неиспользуемые аргументы функций и методов
+    "RUF100",   # неиспользуемые `# noqa`
+    "ERA001",   # закомментированный код
+    "PIE790",   # бессмысленный `pass`
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Аргументы фикстур pytest нужны как зависимости, а не для использования в теле теста.
+"tests/**" = ["ARG001", "ARG002", "ARG005"]
+# `request` обязателен сигнатурой обработчика исключений FastAPI.
+"src/deribit_tracker/api/exception_handlers.py" = ["ARG001"]
 
 [tool.mypy]
 python_version = "3.14"

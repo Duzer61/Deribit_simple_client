@@ -4,8 +4,8 @@ from decimal import Decimal
 
 import fakes
 import pytest
-from deribit_tracker.application.services import CollectPricesService
 
+from deribit_tracker.application.services import CollectPricesService
 from deribit_tracker.domain.exceptions import PriceSourceTimeoutError
 from deribit_tracker.domain.models import Ticker
 
