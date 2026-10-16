@@ -295,7 +295,20 @@ Unit-тесты не обращаются к реальному Deribit и не 
 проверяется на локальном `aiohttp.test_utils.TestServer`, сервисы — на фейках.
 Integration-тесты требуют переменной `TEST_DATABASE_URL` с отдельной базой
 (см. `.env.example`); без неё они скипаются с пояснением. SQLite как замена
-PostgreSQL не используется.
+PostgreSQL не используется. Отдельную базу для тестов нужно создать один раз,
+например в уже запущенном из compose PostgreSQL:
+
+```bash
+docker compose exec -T postgres psql -U deribit -d deribit_tracker \
+  -c 'CREATE DATABASE deribit_tracker_test'
+```
+
+Запуск integration-тестов против неё:
+
+```bash
+TEST_DATABASE_URL='postgresql+asyncpg://deribit:deribit@localhost:55432/deribit_tracker_test' \
+  uv run pytest -m integration -q
+```
 
 ### Проверка на мёртвый код
 

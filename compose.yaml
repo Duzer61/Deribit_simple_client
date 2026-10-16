@@ -7,6 +7,7 @@ x-app-environment: &app-environment
   CELERY_BROKER_URL: redis://redis:6379/0
   DERIBIT_BASE_URL: ${DERIBIT_BASE_URL:-https://www.deribit.com/api/v2}
   HTTP_TIMEOUT_SECONDS: ${HTTP_TIMEOUT_SECONDS:-10}
+  COLLECT_INTERVAL_SECONDS: ${COLLECT_INTERVAL_SECONDS:-60}
   LOG_LEVEL: ${LOG_LEVEL:-INFO}
 
 services:
