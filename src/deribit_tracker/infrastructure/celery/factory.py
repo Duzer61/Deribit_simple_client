@@ -12,14 +12,12 @@ from deribit_tracker.config import Settings
 from deribit_tracker.infrastructure.celery.tasks import (
     COLLECT_PRICES_SCHEDULE_KEY,
     COLLECT_PRICES_TASK_NAME,
-    COLLECT_SCHEDULE_SECONDS,
     RunnerFactory,
     register_collect_prices_task,
 )
 
 __all__ = [
     "COLLECT_PRICES_TASK_NAME",
-    "COLLECT_SCHEDULE_SECONDS",
     "create_celery_app",
 ]
 
@@ -29,9 +27,10 @@ def create_celery_app(
     runner_factory: RunnerFactory,
     logger: logging.Logger | None = None,
 ) -> Celery:
-    """Создаёт Celery-приложение с Redis-broker и расписанием раз в минуту.
+    """Создаёт Celery-приложение с Redis-broker и расписанием из настроек.
 
-    Result backend не настраивается: результаты задач не используются.
+    Период расписания берётся из ``Settings.collect_interval_seconds`` (по умолчанию
+    60 секунд). Result backend не настраивается: результаты задач не используются.
     """
     celery_app = Celery("deribit_tracker", broker=settings.celery_broker_url)
     celery_app.conf.update(
@@ -44,7 +43,7 @@ def create_celery_app(
         beat_schedule={
             COLLECT_PRICES_SCHEDULE_KEY: {
                 "task": COLLECT_PRICES_TASK_NAME,
-                "schedule": COLLECT_SCHEDULE_SECONDS,
+                "schedule": settings.collect_interval_seconds,
             }
         },
     )

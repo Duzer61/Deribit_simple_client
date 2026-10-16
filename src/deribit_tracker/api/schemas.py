@@ -41,9 +41,3 @@ class HealthResponse(BaseModel):
     """Ответ технического healthcheck."""
 
     status: str
-
-
-class ErrorResponse(BaseModel):
-    """Ответ с описанием ошибки."""
-
-    detail: str

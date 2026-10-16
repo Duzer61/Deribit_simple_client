@@ -15,7 +15,6 @@ from deribit_tracker.application.ports import CollectionRunner
 from deribit_tracker.application.services import CollectionReport
 
 COLLECT_PRICES_TASK_NAME = "deribit_tracker.collect_prices"
-COLLECT_SCHEDULE_SECONDS = 60.0
 COLLECT_PRICES_SCHEDULE_KEY = "collect-prices-every-minute"
 
 RunnerFactory = Callable[[], CollectionRunner]

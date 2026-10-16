@@ -17,9 +17,10 @@ from deribit_tracker.application.services import CollectionReport
 from deribit_tracker.config import Settings
 from deribit_tracker.infrastructure.celery.factory import (
     COLLECT_PRICES_TASK_NAME,
-    COLLECT_SCHEDULE_SECONDS,
     create_celery_app,
 )
+
+SCHEDULE_INTERVAL_SECONDS = 90
 
 
 class FakeRunner:
@@ -51,18 +52,20 @@ class RunnerHolder:
         return self.runner
 
 
-def build_settings() -> Settings:
+def build_settings(collect_interval_seconds: int = 60) -> Settings:
     return Settings(
         _env_file=None,
         database_url="postgresql+asyncpg://user:pass@localhost:5432/deribit_tracker",
         celery_broker_url="redis://localhost:6379/0",
+        collect_interval_seconds=collect_interval_seconds,
     )
 
 
 @pytest.fixture(scope="module")
 def celery_app() -> tuple[Any, RunnerHolder]:
     holder = RunnerHolder()
-    return create_celery_app(build_settings(), holder), holder
+    settings = build_settings(collect_interval_seconds=SCHEDULE_INTERVAL_SECONDS)
+    return create_celery_app(settings, holder), holder
 
 
 @pytest.fixture
@@ -79,7 +82,7 @@ def test_task_is_registered_under_expected_name(celery_app: tuple[Any, RunnerHol
     assert app.tasks[COLLECT_PRICES_TASK_NAME].name == COLLECT_PRICES_TASK_NAME
 
 
-def test_beat_schedule_runs_every_60_seconds(celery_app: tuple[Any, RunnerHolder]) -> None:
+def test_beat_schedule_uses_configured_interval(celery_app: tuple[Any, RunnerHolder]) -> None:
     app, _ = celery_app
 
     schedules = [
@@ -89,7 +92,7 @@ def test_beat_schedule_runs_every_60_seconds(celery_app: tuple[Any, RunnerHolder
     ]
 
     assert len(schedules) == 1
-    assert schedules[0]["schedule"] == COLLECT_SCHEDULE_SECONDS == 60.0
+    assert schedules[0]["schedule"] == SCHEDULE_INTERVAL_SECONDS
 
 
 def test_task_invokes_application_scenario(

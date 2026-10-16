@@ -7,7 +7,8 @@ read-only HTTP API на FastAPI.
 ## Что умеет
 
 - Периодический сбор index price `btc_usd` и `eth_usd` методом
-  `public/get_index_price` — Celery Beat запускает задачу каждые 60 секунд.
+  `public/get_index_price` — Celery Beat запускает задачу каждые 60 секунд
+  (период задаётся `COLLECT_INTERVAL_SECONDS`, по умолчанию 60).
 - Сохранение наблюдения: тикер, точная цена (`Decimal` → `NUMERIC(30,12)`)
   и время наблюдения в секундах UNIX UTC.
 - HTTP API только для чтения: все записи тикера, последняя сохранённая запись,
@@ -283,7 +284,7 @@ float и теряет точность `NUMERIC(30,12)`. Тип поля заф�
 ## Тесты и линтеры
 
 ```bash
-uv run pytest tests/unit -q         # unit-тесты: без сети, БД и брокера → 96 passed
+uv run pytest tests/unit -q         # unit-тесты: без сети, БД и брокера → 98 passed
 uv run pytest -m integration -q     # integration на реальном PostgreSQL → 8 passed
 uv run ruff check .                 # All checks passed!
 uv run ruff format --check .        # все файлы уже отформатированы
@@ -409,7 +410,7 @@ Exactly-once не гарантируется и не декларируется.
 |---|---|---|
 | Контракт `public/get_index_price` проверен | выполнено | live-запросы к публичному API: `result.index_price`; неверный `index_name` → JSON-RPC `-32602` при HTTP 400 |
 | aiohttp-клиент получает index price обоих тикеров | выполнено | `tests/unit/test_deribit_client.py`; live-сбор `btc_usd` и `eth_usd` |
-| Celery Beat запускает сбор каждые 60 с | выполнено | `COLLECT_SCHEDULE_SECONDS = 60.0` + лог beat: `Sending due task collect-prices-every-minute` через 60 c |
+| Celery Beat запускает сбор каждые 60 с | выполнено | период берётся из `Settings.collect_interval_seconds` (по умолчанию 60), unit-тест `test_beat_schedule_uses_configured_interval`; лог beat: `Sending due task collect-prices-every-minute` через 60 c |
 | Celery worker сохраняет наблюдения в PostgreSQL | выполнено | лог worker + строки в `price_observations` |
 | Данные: тикер, точная цена, UNIX timestamp | выполнено | `NUMERIC(30,12)`, `BIGINT`; ответ API с `"price":"2373.870000000000"` |
 | Три обязательных GET endpoint | выполнено | `/api/v1/prices`, `/api/v1/prices/latest`, `/api/v1/prices/by-date` |
@@ -419,7 +420,7 @@ Exactly-once не гарантируется и не декларируется.
 | Ошибки внешнего API и БД обработаны | выполнено | категории ошибок источника, `503` при недоступности, `404` для пустого latest |
 | Нет глобальных экземпляров инфраструктуры | выполнено | `app.state` + `lifespan`, фабрики `create_app`/`create_celery_app`/`create_collect_runner` |
 | Alembic-миграция | выполнено | `alembic/versions/0001_create_price_observations.py`; `alembic current` → `0001 (head)` |
-| Unit-тесты по TDD проходят | выполнено | `uv run pytest tests/unit -q` → `96 passed` |
+| Unit-тесты по TDD проходят | выполнено | `uv run pytest tests/unit -q` → `98 passed` |
 | Integration-тесты на PostgreSQL | выполнено | `uv run pytest -m integration -q` → `8 passed` |
 | Линтинг и форматирование | выполнено | `ruff check .` → `All checks passed!`; `ruff format --check .` → без изменений |
 | Docker-конфигурация проверена | выполнено | `docker compose config`, `build`, `up -d`, `ps -a` (api `healthy`, migrate `Exited (0)`), smoke в контейнере, `down` |
