@@ -1,7 +1,8 @@
 """Фабрика FastAPI-приложения.
 
-``create_app`` создаёт движок БД и фабрику сессий внутри lifespan и хранит их в
-``app.state``; глобальных экземпляров нет. Запуск:
+``create_app`` создаёт движок БД и фабрику сессий внутри lifespan: движком владеет
+lifespan (закрывает его при завершении), а фабрика сессий передаётся HTTP-зависимостям
+через ``app.state``. Глобальных экземпляров нет. Запуск:
 
 ``uvicorn deribit_tracker.api.app:create_app --factory``
 """
@@ -27,7 +28,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         engine, session_factory = create_engine_and_session_factory(resolved_settings.database_url)
-        app.state.engine = engine
         app.state.session_factory = session_factory
         try:
             yield
@@ -35,7 +35,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             await dispose_engine(engine)
 
     app = FastAPI(title="Deribit Price Tracker", version="0.1.0", lifespan=lifespan)
-    app.state.settings = resolved_settings
     register_exception_handlers(app)
     app.include_router(router)
     return app
